@@ -8,7 +8,7 @@ import sqlite3
 app = Flask(__name__)
 CORS(app)
 
-db_path = 'usuarios.db'
+db_path = './mysite/usuarios.db'
 connection = sqlite3.connect(db_path)
 #endregion
 
@@ -23,17 +23,18 @@ def insertar_usuario():
     data = request.json
     correo = data['correo']
     nombre = data['nombre']
-    contraseña = data['contraseña']
+    contrasena = data['contraseña']
 
     try:
         cursor = connection.cursor()
         query = 'INSERT INTO usuarios (correo, nombre, contraseña) VALUES (?, ?, ?)'
-        cursor.execute(query, (correo, nombre, contraseña))
+        cursor.execute(query, (correo, nombre, contrasena))
         connection.commit()
         return jsonify({'mensaje': 'Usuario insertado correctamente'}), 200
     except Exception as e:
         print(f'Error al insertar usuario: {e}')
         return jsonify({'mensaje': 'Error al insertar usuario'}), 500
+
 
 #   SUMMARY: Endpoint to see if exists users in usuarios.db
 #   RETURN: response 200(with the user or empty) or response 500
@@ -43,22 +44,49 @@ def insertar_usuario():
 def comprobar_usuario():
     data = request.json
     nombre = data['nombre']
-    contraseña = data['contraseña']
 
     try:
         cursor = connection.cursor()
         query = 'SELECT * FROM usuarios WHERE nombre = ?'
         cursor.execute(query, (nombre,))
         result = cursor.fetchall()
-        return jsonify(result), 200
+        return jsonify(usuario=result), 200
     except Exception as e:
         print(f'Error al buscar usuario: {e}')
         return jsonify({'mensaje': 'Error al buscar usuario'}), 500
+
+#   SUMMARY: Endpoint to see if exists users in usuarios.db
+#   RETURN: response 200(with the user or empty) or response 500
+#   POST /comprobarLogIn
+#   VALUES: data(user info)
+@app.route('/comprobarLogIn', methods=['POST'])
+def comprobar_log_in():
+    data = request.json
+    nombre = data['nombre']
+    contrasenia = data['contraseña']
+
+    try:
+        cursor = connection.cursor()
+        query = 'SELECT * FROM usuarios WHERE nombre = ? AND contraseña = ?'
+        cursor.execute(query, (nombre, contrasenia))
+        result = cursor.fetchone()
+        return jsonify(usuario=result), 200
+    except Exception as e:
+        print(f'Error al buscar usuario: {e}')
+        return jsonify({'mensaje': 'Error al buscar usuario'}), 500
+
+#method setting cors
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 #endregion
 
 if __name__ == '__main__':
     try:
-        app.run(debug=True, port=8000)
+        app.run(debug=True)
     finally:
         connection.close()
