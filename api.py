@@ -59,6 +59,6 @@ def comprobar_usuario():
 
 if __name__ == '__main__':
     try:
-        app.run(debug=True)
+        app.run(debug=True, port=8000)
     finally:
         connection.close()
